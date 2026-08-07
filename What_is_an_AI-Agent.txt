@@ -1,0 +1,42 @@
+What is an Agent ?
+
+- Defination and what set AI Agent apart from standalone Large Language Models .
+- An AI agent thinks and decides next steps dynamically .
+- AI Agent (LLM based) = LLM + Tools + Loop
+ - Features :
+          - Goal Directed
+          - Autonomous 
+          - Interacts with  APIs , databases etc
+          - Iterative , operates in a loop
+
+- An AI Agent is not a new kind of model - it's an architecture pattern that warps an LLM in a reason-act-observe-loop .
+
+The Agent Execution Loop :
+
+  Perceive ----> Reason ----> Act ----> Observe 
+
+  Loop continues untill the goal is reached .
+
+  Termination Condition :
+    - Agent decides it has the final answer .
+    - Maximum iteration count reached .
+    - Error or timeout triggers Fallback .
+
+  What can go wrong  :
+    - Infinite Loop (agent never decides it's done)
+    - Hallucination tool calls (calling tools that don't exist)
+    - Cost explosion (too many LLM API calls)
+
+
+AI Agent Core Components .
+
+- Based on the lesson, the three core components of every AI agent are:
+
+1. The LLM (The Brain): It handles all the reasoning, understanding, and decision-making. It decides which tool to use and determines what to do next based on the user's goal.
+
+2. Tools (The Hands): These allow the agent to interact with the real world by reading information or executing actions (e.g., calling a weather API, searching databases, running code). Note: The LLM only generates the request for a tool; your agent code handles the actual execution for security.
+
+3. The Loop / Orchestration Layer (The Nervous System): This is the code that connects everything together. It runs the execution cycle (reason, act, observe), tracks state, manages memory, routes tools, and enforces safety guardrails like a main application controller.
+
+
+
