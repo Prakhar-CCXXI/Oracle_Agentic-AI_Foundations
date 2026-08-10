@@ -1,0 +1,38 @@
+Building on our discussion of the agent's brain, tools, and the orchestration loop, AI agents use three major reasoning frameworks to determine how they plan, act, and make decisions: Chain-of-Thought (CoT), ReAct, and Tree-of-Thought.
+
+1. Chain-of-Thought (CoT)
+Chain-of-Thought serves as the foundational building block for all agentic reasoning. It is not an agent pattern on its own, but rather a prompting technique that improves how a Large Language Model processes information.
+
+The Core Idea: Instead of forcing an LLM to jump straight to a final answer, CoT instructs the model to "show its work" and think step-by-step. It works particularly well for math, logic puzzles, and structured analytical tasks.
+
+How it is used:
+
+Zero-Shot CoT: Adding simple instructions like "Let's think step by step" to the prompt, which triggers the model to output its intermediate thinking before the answer.
+
+Few-Shot CoT: Providing the model with examples that map out the reasoning process so it can learn to mimic that logical pattern.
+
+The Benefits: CoT doesn't make the model smarter, but it allows it to use its reasoning abilities far more reliably. This provides transparency and debuggability, making it easier to spot exactly where the model's logic went wrong.
+
+The Limitations: Standalone CoT only uses the model's internal training knowledge. It has no access to the real world, meaning if its internal knowledge is incorrect, it will confidently generate wrong reasoning with no ability to self-correct.
+
+2. ReAct (Reasoning + Acting)
+ReAct is widely considered the most important design pattern in agentic AI. It directly addresses the main limitations of CoT by combining reasoning with external tool usage in a continuous loop.
+
+The Core Idea: Instead of reasoning in isolation, the agent interleaves thinking with action. The LLM reasons about what to do next, executes an action (like calling a tool), observes the result, and then reasons again based on that new observation.
+
+Why Interleaving Matters:
+
+CoT-only gives the model reasoning but no real-world access.
+Tool-use-only gives the model action capabilities but no logic regarding when or how to use them.
+ReAct merges both. By running reasoning and acting in a loop, it grounds the agent's thoughts in real-world, real-time data, preventing the model from hallucinating or guessing answers when it should be looking them up.
+
+Production Standard: Because of this power, ReAct is the underlying framework implemented by most popular production agent SDKs (such as LangChain and OpenAI's Agents SDK). It successfully balances transparency, capability, and computational cost.
+
+3. Tree-of-Thought (ToT)
+Tree-of-Thought is a highly sophisticated reasoning pattern designed for complex decision-making.
+
+The Core Idea: Instead of pursuing a single linear path of reasoning (like CoT or ReAct), the agent considers and evaluates multiple branches of approach simultaneously.
+
+The Analogy: It operates like a chess player mentally exploring different potential moves—calculating "if I take this action, what are the next steps vs. if I take that action?"—before committing to a final path.
+
+The Trade-off: While Tree-of-Thought is highly capable for strategic tasks, most production-level systems default to ReAct because ToT introduces significantly higher computational complexity, cost, and latency.

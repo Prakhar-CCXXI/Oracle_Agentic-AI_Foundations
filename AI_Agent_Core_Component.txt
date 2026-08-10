@@ -1,0 +1,100 @@
+ AI Agent Core Components .
+
+- Based on the lesson, the three core components of every AI agent are:
+
+a. The LLM (The Brain): It handles all the reasoning, understanding, and decision-making. It decides which tool to use and determines what to do next based on the user's goal.
+
+b. Tools (The Hands): These allow the agent to interact with the real world by reading information or executing actions (e.g., calling a weather API, searching databases, running code). Note: The LLM only generates the request for a tool; your agent code handles the actual execution for security.
+
+c. The Loop / Orchestration Layer (The Nervous System): This is the code that connects everything together. It runs the execution cycle (reason, act, observe), tracks state, manages memory, routes tools, and enforces safety guardrails like a main application controller.
+
+
+1. What is an LLM ?
+
+In an autonomous AI agent, the Large Language Model (LLM) serves as the brain or the central reasoning engine. It is responsible for understanding and reasoning, transforming a standalone LLM from a passive text generator into an active decision-maker. 
+
+Core Responsibilities of the Brain
+
+Within an agentic system, the LLM performs several critical jobs:
+*   Understanding Intent: It parses the user's natural language requests to identify the ultimate objective.
+*   Planning: It breaks down complex, multi-step goals into actionable steps.
+*   Selecting Tools: It decides which tool to use and specifies the exact arguments needed. Crucially, the LLM **never executes tools itself; it only generates a structured tool call request, while the agent's code handles the actual execution as a critical security boundary.
+*   Interpreting Observations: After a tool is executed, the LLM reviews the results (the "observations") to determine what to do next.
+*   Generating Responses: It synthesises all collected information to formulate the final answer for the user.
+
+Capabilities and Flexibility
+The LLM can be prompted using structured reasoning strategies like Chain-of-Thought (CoT) or ReAct. Some newer reasoning models also feature built-in Chain-of-Thought capabilities developed during training, which can further enhance multi-step planning, though they typically introduce higher latency and cost. 
+
+Importantly, no retraining is needed to customise the brain; the same underlying LLM can power different agents configured with completely different tools.
+
+Key Selection Trade-Offs
+
+Choosing the right LLM for an agent's brain is a balancing act of **capability, cost, and latency**. Key considerations include:
+*   Instruction Following: The model must reliably follow system prompts that define its role, available tools, and expected output formats.
+*   Large Context Window: Highly preferred because agents accumulate context rapidly. Every thought, action, and observation is appended back into the prompt, quickly filling up context space.
+*   Reasoning Quality: The strength of the model's reasoning directly dictates how well the agent can navigate complex tasks.
+*   Cost Management: Because every loop iteration triggers another LLM API call, running agents can become expensive. To manage this, developers sometimes use a two-tier approach—routing simpler, routine decisions to a cheaper, faster LLM, and reserving a more powerful model for complex reasoning.
+
+
+
+2. What are the Tools ?
+
+If the Large Language Model (LLM) is the "brain" of an AI agent, then tools are its "hands"
+. Without tools, an LLM is a passive, stateless text generator confined to answering questions solely from its training memory
+. Tools provide the agent with real-world capabilities, transforming it from a text generator into an active agent that can read information and execute actions .
+
+What Tools Can Do
+By equipping an agent with tools, developers allow it to bypass the typical limitations of a standalone LLM. 
+
+Depending on its configuration, an agent can use tools to:
+Query databases and fetch structured information
+
+Call external APIs to interact with other software systems (such as checking the weather or searching for flight prices).
+
+Execute code to solve mathematical or logical problems.
+
+Perform web searches to gather up-to-date knowledge beyond its training data.
+
+How Tool Calling Works
+The process of an agent choosing and executing a tool is highly structured and relies on a clean division of labour
+
+Defining the Toolbox: The agent describes its available tools using conceptual JSON schemas .
+Sending the Prompt: The agent sends these schemas alongside the user's message to the LLM—essentially giving the model both the question and the "toolbox".
+
+The LLM's Decision: The LLM decides whether it can answer directly or if it needs to use a tool. If a tool is required, the LLM generates a structured tool call request containing the specific arguments needed .
+Execution (The Security Boundary): Crucially, the LLM never executes the tool itself. 
+The host application (the agent's running code) receives the tool call, validates it, and executes the actual code or API. 
+This separation of decision-making from execution forms a critical security boundary.
+
+Observation & Next Steps: The agent sends the result of the tool execution back to the LLM as an observation. The LLM reviews this result and decides whether it has enough information to answer the user or if it needs to call another tool.
+
+Tool Standards (Model Context Protocol)
+Integrating tools can historically be complex because different LLM providers use different specifications. To address this, Anthropic introduced the Model Context Protocol (MCP), which acts as a new standard to universally define tool interfaces across different LLM providers.
+
+3. What is Loop Orchestration ?
+
+If the LLM is the agent's brain and tools are its hands, the orchestration loop is its nervous system—or the operating system that keeps the entire process running .
+
+In a traditional application, you have a controller that routes HTTP requests. In an agentic architecture, the orchestration layer manages the flow of reasoning steps, tool execution, and memory. It wraps around a stateless, passive language model to transform it into an active decision-maker capable of maintaining state and self-correcting .
+
+The orchestration loop coordinates six essential functions to manage the agentic workflow:
+
+1. Loop Management
+The loop runs the agent's core execution cycle: Perceive → Reason → Act → Observe. It evaluates progress at each step and decides whether to continue, pause, or terminate the cycle .
+
+2. State Machine Tracking
+Because LLMs are naturally stateless, the orchestration layer acts as a state machine. It tracks the agent's step-by-step progress through a task, detecting if the agent is succeeding, repeating itself unnecessarily, or stuck in a failure state so it can guide the next action .
+
+3. Memory Management
+The loop maintains context across multiple turns. It handles short-term working memory (saving thoughts, observations, and tool results) and retrieves relevant long-term knowledge when the task requires it .
+
+4. Tool Routing & Error Handling
+When the LLM decides to call a tool, the loop takes the LLM's structured request, formats it properly, executes the code or API, and feeds the resulting "observation" back to the brain. If a tool fails, the loop handles the error rather than letting the entire system crash .
+
+5. Reasoning Strategy
+The loop applies structured frameworks—such as Chain-of-Thought (CoT) or ReAct—to help the brain systematically break down complex, multi-step goals into manageable tasks.
+
+6. Safety and Guardrails
+To prevent runaway behavior, the loop enforces system-level constraints. If an agent gets stuck in an infinite loop or tries to perform an unauthorized action, hardcoded safety limits and guardrails override the LLM's decisions to terminate the process.
+
+
