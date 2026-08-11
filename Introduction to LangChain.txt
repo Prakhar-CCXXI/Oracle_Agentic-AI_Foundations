@@ -1,0 +1,85 @@
+What is LangChain ?
+
+LangChain is an open-source framework designed for building applications powered by Large Language Models (LLMs).
+While a standalone LLM is incredibly powerful at generating text and reasoning, it has severe limitations—namely, it cannot call APIs, query databases, or execute code on its own. 
+LangChain solves this by connecting the model to the outside world, transforming it from a passive text generator into an active system capable of taking real-world actions
+
+
+Three Core Capabilities
+LangChain provides developers with three fundamental capabilities:
+Connect: It links your language models to external systems such as APIs, tools, and databases.
+Orchestrate: It combines multiple individual steps into structured, multi-step workflows rather than relying on a single text response.
+Build: It provides the end-to-end scaffolding to create complete applications, such as autonomous agents, interactive chatbots, or sophisticated retrieval systems.
+Core Building Blocks
+To make development modular and reusable, LangChain is structured around key building blocks:
+The Model: This is the "brain" of the application. LangChain provides a unified interface to interact with various model providers (like OpenAI, Anthropic, or Google). This means you can swap out the underlying model with minimal code changes, although different models will exhibit different capabilities.
+Prompt Templates: Instead of hardcoding prompt strings, these are reusable templates with placeholders (e.g., Explain {topic} to a beginner) that let you inject user inputs dynamically. These include chat prompt templates that specify role-based structures for system, human, and AI messages.
+Chains: The namesake of LangChain, a chain is a sequence of processing steps where data flows from one component to the next. For example, a basic chain might feed a prompt template into an LLM and then pipe the response through an output parser. These components are linked using the pipe (|) operator via LangChain Expression Language (LCEL)
+
+
+
+Practicle Implementation : 
+
+Step 1: Environment Setup & Instantiating the AI "Brain" (The Model)
+First, you must set up your execution environment and select your Large Language Model (LLM). This model serves as the reasoning engine
+.
+Isolate Dependencies: Install the core libraries: langchain-openai for the model interface, langgraph for the stateful execution runtime, and python-dotenv for securely managing environment variables
+.
+Define Keys Safely: Store your API keys in a separate .env file to keep secrets out of your repository
+.
+Instantiate the Model:
+from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
+
+# Load variables from .env
+load_dotenv()
+
+# Pick the brain (balancing capability, latency, and cost)
+model = ChatOpenAI(model="gpt-4o-mini", temperature=0) [7]
+Step 2: Defining the "Hands" (The Tools)
+You define tools as standard Python functions. To expose them to the LLM, you register them using LangChain's @tool decorator
+. Crucially, the quality of your code comments and typing here determines how accurately the LLM uses them
+.
+from langchain_core.tools import tool
+
+@tool
+def multiply(a: float, b: float) -> float:
+    """Multiply two numbers together. Use this tool for multiplication operations."""
+    return a * b [11]
+
+@tool
+def divide(a: float, b: float) -> float:
+    """Divide a by b. Use this tool for division operations."""
+    if b == 0:
+        raise ValueError("Cannot divide by zero.")
+    return a / b [11]
+
+tools = [multiply, divide]
+Why these elements matter:
+The @tool Decorator: Registers the function into the agent's internal registry.
+Type Hints (a: float): Tell the framework what schema to generate so the LLM outputs the correct data types.
+Return Type (-> float): Helps the framework track the expected outputs and chain them as inputs to subsequent tools.
+The Docstring: Read directly by the LLM to understand when and how to select the tool. LangChain inspects these elements and compiles them into a structured JSON schema to send to the LLM.
+
+Step 3: Creating the Orchestration "Loop" (The Agent)
+With your model (brain) and tools (hands) defined, you assemble them into a cohesive agent. In production systems, you can leverage a pre-built ReAct runtime to handle the complex loop of planning, execution, and state tracking from langgraph.prebuilt import create_react_agent .
+
+# Compiles the brain, tools, and orchestration loop into a single line of code
+agent = create_react_agent(model, tools) [2, 11]
+Behind this simple line, the framework establishes a Registry Bridge. When the LLM chooses a tool, it outputs a string requesting a tool call (e.g., "multiply"). The orchestration layer looks up this string in its Python registry, executes the actual code safely, and formats the output .
+
+Step 4: Invoking the Agent
+To start execution, you trigger the agent with a natural language goal.
+query = "What is 15 multiplied by 8 and then divided by 3?"
+response = agent.invoke({"messages": [("user", query)]}) [20, 21]
+
+# Extract the final answer from the stateful history
+print(response["messages"][-1].content)
+Under-the-Hood Execution:
+First Turn: The LLM receives the user prompt and the JSON schemas of your tools. It reasons that it must multiply first, and returns a structured tool call request containing A=15, B=8 and a unique call_id .
+
+Tool Run: The framework intercepts this request, runs your local multiply function, and catches the result (120).
+
+Observation Feedback: The framework appends a new message to the conversation history with the role of tool, linking back to call_id_001 with the value 120. Because LLMs are stateless, the framework must resend this entire growing history back to the model on every loop.
+Second Turn: The LLM parses the updated history, sees that the result of multiplication is 120, and requests the divide tool with A=120, B=3.
+Completion: The loop executes, the observation returns 40 . The LLM recognises it has all the information it needs, generates a final natural language answer, and signals to exit the loop .
