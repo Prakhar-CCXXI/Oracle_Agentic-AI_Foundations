@@ -1,0 +1,34 @@
+To understand LangChain "under the hood", we have to look past the clean, high-level code library and examine how it operates as a mediator between the user, the Large Language Model (LLM), and your local computer .
+The single most important concept to grasp is this: the LLM itself never runs Python code, queries databases, or makes API calls . It is purely a text-based reasoning engine . LangChain is the machinery that intercepts the LLM's text instructions, executes the actual work, and feeds the results back .
+
+Here is the exact step-by-step mechanical sequence of what happens under the hood during a single agentic reasoning loop:
+
+1. Compiling the "Toolbox" (Schema Generation)
+
+When you define a tool in Python, you use decorators, type hints, and docstrings [4]. Under the hood, LangChain inspects these elements and compiles them into a structured JSON schema .
+This schema defines the tool's name, describes what it does (extracted from your docstring), and specifies the required input parameters and their types (extracted from your type hints) .
+When the agent is invoked, LangChain bundles these JSON schemas together and appends them to the system prompt, essentially presenting the LLM's brain with its available "toolbox" .
+
+2. The Structured Tool Request
+When you send a query to the agent, the LLM evaluates the prompt and the tool schemas . If it determines it needs a tool to proceed, it does not output a standard conversational response . Instead, it outputs a structured tool call request (typically in JSON format) .
+This JSON payload contains the exact name of the tool it wants to use and the arguments it wants to pass .
+Crucially, LangChain assigns a unique call ID to this request to track it .
+
+3. The Registry Bridge and Execution
+Once the LLM outputs this tool call request, it pauses . LangChain intercepts the JSON payload .
+LangChain maintains an internal registry—essentially a local Python dictionary that maps the string name of a tool (e.g., "multiply") to the actual Python function reference on your computer .
+LangChain looks up the tool in this registry, validates the arguments provided by the LLM against your Python type hints, and executes the local Python function .
+
+4. Overcoming Statelessness (Memory Tracking)
+LLMs are inherently stateless, meaning they have no memory of prior turns or the actions they just requested . LangChain is responsible for maintaining the state and history .
+Once your Python function finishes executing, LangChain captures the return value (the "observation") .
+It packages this output into a new message with a dedicated tool role [6]. This message explicitly includes the original call ID so the LLM knows which tool request this result belongs to .
+LangChain appends this tool message to the conversation history .
+
+5. Resending the Updated History
+To progress the task, LangChain packages the entire updated conversation history—which now contains the user's initial question, the LLM's tool call request, and the tool's execution result—and sends it back to the LLM for a new round of reasoning .
+
+6. The Exit Signal
+The LLM reviews the newly updated history [7]. It sees that its previous tool call was executed and observes the result .
+If it needs further information, the loop repeats (Steps 2 to 5) .
+If it has everything it needs, it recognises the task is complete and outputs a standard conversational text response instead of a tool call request . LangChain identifies this change, breaks the loop, and delivers the final answer to the user .
