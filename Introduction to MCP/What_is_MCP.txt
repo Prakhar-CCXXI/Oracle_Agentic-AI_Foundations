@@ -1,0 +1,24 @@
+Model Context Protocol (MCP) is an open standard that allows AI applications to connect to external tools, data sources, and systems in a consistent, standardized way. Often referred to as the "USB-C for AI," MCP serves as a common language that both the AI application and the tools agree to speak .
+
+The Three Participants in MCP Architecture
+The MCP architecture relies on three decoupled components to function:
+
+The Host: This is the primary AI application that the user directly interacts with (such as Claude Desktop, Cursor IDE, Visual Studio Code, or any other MCP-enabled software). The host contains the LLM reasoning engine (the "brain") that runs the ReAct loo. The host is responsible for managing and aggregating the context retrieved from different servers.
+
+The Client: The host runs one or more lightweight MCP clients. Typically, each client maintains a dedicated 1-to-1 connection with exactly one MCP server. (Note: Some frameworks like LangChain provide specialized clients that can load tools and resources from multiple servers into a single client).
+
+The Server: These are independent programs that expose capabilities to the client. They can provide tools for the agent to execute, data resources to read, or prompt templates. MCP servers can connect to local files or external platforms like GitHub, Slack, or databases.
+
+
+The Problem MCP Solves: Quadratic vs. Linear Complexity
+
+Before MCP was introduced, developers faced a massive integration bottleneck :
+
+The N×M Problem: Every individual AI application had to build a custom, bespoke connector for every single external tool it wanted to use. If you had 3 AI applications and 4 tools, you had to write and maintain 12 separate, custom integrations (3×4). This created messy, hard-to-maintain code and limited how quickly the ecosystem could grow.
+
+The MCP Solution (N+M): With MCP, each AI application only needs to build one MCP client, and each tool vendor only needs to expose one MCP server
+. Any MCP-compliant client can instantly talk to any MCP-compliant server, regardless of who built them
+. This shifts integration complexity from quadratic (N×M) to linear (N+M)
+. For that same scenario of 3 apps and 4 tools, you only need 7 integrations instead of 12
+
+

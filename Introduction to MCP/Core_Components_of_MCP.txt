@@ -1,0 +1,31 @@
+The Three Core Primitives
+MCP servers expose three primary capabilities (primitives) to the AI client: 
+
+Tools (Actions): These are executable functions that allow the model to perform real-world actions. They are by far the most commonly used primitive. When an agent needs to calculate a value, query a database, or call an external API, it executes a tool .
+
+Resources (Data): These are read-only data sources that the model can access to gather context. Because they are read-only, reading a resource does not cause any side effects. Examples include local files, database tables, or API data.
+
+Prompts (Structure): These are reusable templates designed to structure interactions with the model. They often serve as UI shortcuts (like slash commands) to quickly inject predefined instructions or formatting without the user needing to write them out manually .
+
+he Model Context Protocol (MCP) relies on a transport layer to deliver structured messages between the client and the server. One of the greatest architectural advantages of MCP is that the protocol layer (which uses JSON-RPC 2.0 format) is completely decoupled from how those messages are transmitted.
+
+This means that whether your tools are running locally on your computer or hosted in the cloud, the format of the messages remains identical. To support these different setups, MCP natively uses two primary transport mechanisms :
+
+1. Standard Input/Output (stdio) Transport
+This is the default and most common transport mechanism used when running local MCP servers directly on your machine .
+
+How it Works: The host application (such as a LangChain agent or Cursor) spawns the local MCP server as a subprocess (child process).
+
+The Communication Pipe: Instead of communicating over a network, the client and server talk directly using standard system streams: standard input (stdin) and standard output (stdout). The client writes JSON-RPC request messages to the server's stdin, and reads the responses coming back from the server's stdout.
+
+The Benefits: It is incredibly fast, simple, and secure. Because it communicates locally via pipes, it requires no network connection, no ports, no HTTP overhead, and no complex network configurations.
+The Limitations: The server must be installed and run locally on the same physical machine as the client.
+
+2. Streamable HTTP Transport
+Introduced as the standard for connecting to remote, cloud-based tools and services .
+
+How it Works: Instead of pipes, this mechanism uses traditional web communication. The client transmits outgoing JSON-RPC requests via standard HTTP POST requests.
+
+Streaming Responses: The remote server then streams the results back to the client using Server-Sent Events (SSE).
+
+The Benefits: This transport is ideal for enterprise cloud deployments. It allows multiple concurrent clients to talk to the same server, handles standard HTTP authentication, and allows tools to live on remote infrastructure.
